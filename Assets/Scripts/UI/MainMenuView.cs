@@ -45,7 +45,11 @@ public class MainMenuView : View<MainMenuView>
 
         switch (_GamePhase)
         {
+            case GamePhase.SIGN_IN:
+                gameObject.SetActive(false);
+                break;
             case GamePhase.MAIN_MENU:
+                gameObject.SetActive(true);
                 m_BrushGroundLight.SetActive(true);
                 Transition(true);
                 break;
