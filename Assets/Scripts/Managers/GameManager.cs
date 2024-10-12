@@ -3,6 +3,10 @@ using System.Collections.Generic;
 
 public enum GamePhase
 {
+    SIGN_IN,
+    SIGNIN_IN_WITH_APPLE,
+    SIGNIN_IN_WITH_GOOGLE,
+    SIGNED_IN,
     MAIN_MENU,
     LOADING,
     GAME,
@@ -78,6 +82,9 @@ public class GameManager : SingletonMB<GameManager>
     private List<GameObject> m_Objects; // Powerups and other map objects
     private List<Player> m_OrderedPlayers;
 
+    DataStoreManager m_DataStoreManager;
+    PlayerSessionDataManager m_PlayerSessionManager;
+    IPlayerSessionAPI m_PlyaerSessionAPIMock;
     void Awake()
     {
 #if UNITY_EDITOR
@@ -130,6 +137,9 @@ public class GameManager : SingletonMB<GameManager>
         };
 
         m_PowerUps = new List<PowerUpData>(Resources.LoadAll<PowerUpData>("PowerUps"));
+        m_DataStoreManager = new DataStoreManager();
+        m_PlyaerSessionAPIMock = new PlayerSessionAPIMockImpl();
+        m_PlayerSessionManager = new PlayerSessionDataManager(m_PlyaerSessionAPIMock, m_DataStoreManager);
     }
 
     void Start()
@@ -137,7 +147,7 @@ public class GameManager : SingletonMB<GameManager>
 #if UNITY_EDITOR
         Debug.Log("Current difficulty is " + StatsManager.Instance.GetLevel());
 #endif
-        ChangePhase(GamePhase.MAIN_MENU);
+        ChangePhase(GamePhase.SIGN_IN);
     }
 
     public List<Color> GetColors()
@@ -158,6 +168,15 @@ public class GameManager : SingletonMB<GameManager>
     {
         switch (_GamePhase)
         {
+            case GamePhase.SIGN_IN:
+                InitPlayerSession();
+                break;
+            case GamePhase.SIGNIN_IN_WITH_APPLE:
+                SignIn(SIGN_IN.APPLE);
+                break;
+            case GamePhase.SIGNIN_IN_WITH_GOOGLE:
+                SignIn(SIGN_IN.GOOGLE);
+                break;
             case GamePhase.MAIN_MENU:
                 Randomize();
                 SetColor(GameManager.Instance.ComputeCurrentPlayerColor(true, 0));
@@ -212,7 +231,26 @@ public class GameManager : SingletonMB<GameManager>
     {
         m_Objects.Add(_Object);
     }
+    private void InitPlayerSession()
+    {
 
+
+        m_PlayerSessionManager.InitPlayerSession();
+
+    }
+
+    private void SignIn(SIGN_IN signIn)
+    {
+        bool hasSignedIn = m_PlayerSessionManager.SignInWith(signIn);
+        if(hasSignedIn)
+        {
+            ChangePhase(GamePhase.SIGNED_IN);
+        } else
+        {
+            ChangePhase(GamePhase.SIGNED_IN);
+        }
+
+    }
     private void Randomize()
     {
         // Randomize points groups
